@@ -69,10 +69,16 @@ Lean it's conventional to use lower-case Greek
 letters to name type-valued arguments, so we'll
 call it *α : Type.* Here's the code we want.
 -/
-
 def id_poly : (α : Type) → α → α
 | _, v => v
 
+/-!
+Note that we match an argument whose value we
+don't need to compute a result using underscore.
+-/
+
+
+-- We can bind names to arguments before the colon
 def id_poly' (α : Type) : α → α
 | v => v
 
@@ -95,7 +101,7 @@ are the elements of the whole function definition:
 -/
 
 -- And we can see that it works!
-#eval (id_poly String) "Hello!"
+#eval id_poly String "Hello!"
 #eval (id_poly Nat) 7
 #eval (id_poly Bool) true
 
@@ -187,6 +193,7 @@ be returned.
 #eval id_poly'' "Hello!"   -- α = String, inferred!
 #eval id_poly'' true       -- α = Bool, inferred!
 
+-- Implicit arguments cannot be given explicitly
 #eval id_poly'' Nat 7             -- error
 #eval id_poly'' String "Hello!"   -- error
 #eval id_poly'' Bool true         -- error
@@ -204,6 +211,49 @@ give the type argument values explicitly.
 #eval @id_poly'' Nat 7          -- α = Nat, inferred!
 #eval @id_poly'' String "Hello!"   -- α = String, inferred!
 #eval @id_poly'' Bool true       -- α = Bool, inferred!
+
+
+/-!
+comp
+let α, β, γ : Type
+takes a function from α to β
+takes a function from β → γ
+return a function from α → γ
+-/
+
+def comp' (α β γ : Type) : (β → γ) → (α → β) → (α → γ)
+| g, f => fun a => g (f a)
+
+def square (n : Nat) : Nat := n^2
+def inc (n : Nat) := Nat.succ n
+
+#reduce (comp' Nat Nat Nat square inc) 5
+
+def is_even (n : Nat) : Bool := n%2 = 0
+#check String.length
+
+def is_even_len : String → Bool := comp' _ Nat _ is_even String.length
+
+def comp { α β γ : Type } : (β → γ) → (α → β) → (α → γ)
+| g, f => fun a => g (f a)
+
+def is_even_len' := comp is_even String.length
+def is_even_len'' := is_even ∘ String.length
+
+def apply2 {α : Type} : (α → α) → α → α
+| f => λ a => f ( f a)
+
+#reduce (apply2 inc) 5
+#reduce (apply2 square) 5
+
+
+
+/-!
+def apply2 { α : Type } : (α → α) → (α → α)
+| f => fun a => f (f a)
+-/
+
+
 
 /-!
 ## Extended Example: A polymorphic apply2 function
