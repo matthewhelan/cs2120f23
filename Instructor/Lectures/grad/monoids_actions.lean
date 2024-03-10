@@ -271,7 +271,8 @@ AddMonoid.mk.{u}
   [toZero : Zero M]
   (zero_add : ∀ (a : M), 0 + a = a)
   (add_zero : ∀ (a : M), a + 0 = a)
-  (nsmul : ℕ → M → M) (nsmul_zero : ∀ (x : M), nsmul 0 x = 0 := by intros; rfl)
+  (nsmul : ℕ → M → M)
+  (nsmul_zero : ∀ (x : M), nsmul 0 x = 0 := by intros; rfl)
   (nsmul_succ : ∀ (n : ℕ) (x : M), nsmul (n + 1) x = x + nsmul n x := by intros; rfl) :
   AddMonoid M
   -/
@@ -367,7 +368,8 @@ extends VAdd : Type (max u_10 u_11)
   vadd : G → P → P
   zero_vadd : ∀ (p : P), 0 +ᵥ p = p
   add_vadd : ∀ (g₁ g₂ : G) (p : P), g₁ + g₂ +ᵥ p = g₁ +ᵥ (g₂ +ᵥ p)
-=
+
+
 class VAdd (G : Type u) (P : Type v) : Type (max u v)
     vadd : G → P → P
 
@@ -377,15 +379,35 @@ class VAdd (G : Type u) (P : Type v) : Type (max u v)
 for additive actions. Then implement AddAction for the Rotation type.
 -/
 
+def vadd_rot_state : Rotation → State → State
+| r0, s => s
+| r120, s0 => s120
+| r120, s120 => s240
+| r120, s240 => s0
+| r240, s0 => s240
+| r240, s120 => s0
+| r240, s240 => s120
 
+instance : VAdd Rotation State := ⟨ vadd_rot_state ⟩
+
+#check AddAction
+
+instance : AddAction Rotation State := {
+    zero_vadd := sorry,
+    add_vadd := sorry
+  }
+
+#reduce ((2 • r120) + (3 • r240) + (0 • r120)) +ᵥ r120
+
+#check AddGroup.mk
 
 /-!
 ## Torsors (of Point-like objects)
 
-Definition of subtraction of "positional" Tri_States.
+Definition of subtraction of positional States.
 On a clock, for example, you can subtract 3PM from
 5PM to get two hours: the duration that, when added
-to 3PM, gets you back to 5PM. Here a "clock" has
+to 3PM, gets you back to 5PM. Here our "clock" has
 only three positions.
 -/
 def sub_State : State → State → Rotation
@@ -399,3 +421,38 @@ def sub_State : State → State → Rotation
 | s240, s0 => r240
 | s240, s120 => r120
 | s240, s240 => r0
+
+
+/-!
+Homework #1: Endow Rotation with the additional structure of an additive group.
+-/
+#check AddGroup.mk
+/-!
+AddGroup.mk.{u}
+  {A : Type u}
+  [toSubNegMonoid : SubNegMonoid A]
+  (add_left_neg : ∀ (a : A), -a + a = 0) :
+AddGroup A
+-/
+
+-- Hint:
+#check SubNegMonoid.mk
+/-!
+SubNegMonoid.mk.{u}
+  {G : Type u}
+  [toAddMonoid : AddMonoid G]
+  [toNeg : Neg G]
+  [toSub : Sub G]
+  (sub_eq_add_neg : ∀ (a b : G), a - b = a + -b := by intros; rfl) (zsmul : ℤ → G → G)
+  (zsmul_zero' : ∀ (a : G), zsmul 0 a = 0 := by intros; rfl)
+  (zsmul_succ' : ∀ (n : ℕ) (a : G), zsmul (Int.ofNat (Nat.succ n)) a = a + zsmul (Int.ofNat n) a := by intros; rfl)
+  (zsmul_neg' : ∀ (n : ℕ) (a : G), zsmul (Int.negSucc n) a = -zsmul (↑(Nat.succ n)) a := by intros; rfl) :
+SubNegMonoid G
+-/
+
+/-!
+Homework #2: Endow State and Rotation with the additional structure of an
+additive torsor over that (additive) group.
+-/
+
+-- Hint: follow the same approach
